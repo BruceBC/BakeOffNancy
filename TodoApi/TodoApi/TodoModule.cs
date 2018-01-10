@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using Microsoft.EntityFrameworkCore;
 using Nancy;
 using Nancy.ModelBinding;
 using TodoApi.Models;
@@ -7,8 +9,15 @@ namespace TodoApi
 {
     public class TodoModule : NancyModule
     {
+        TodoApiContext context;
+
         public TodoModule()
         {
+            var connection = @"Server=localhost;Port=5432;User ID=postgres;Password=postgres;Database=nancy;";
+            var options = new DbContextOptionsBuilder<TodoApiContext>();
+            options.UseNpgsql(connection);
+
+
             Get("/todos", args => index(args)); // All Todos
             Get("/todos/{id}", args => ""); // Todos By id
             Post("/todos", args =>create(args)); // Insert new Todo
@@ -26,6 +35,17 @@ namespace TodoApi
 
         private Todo create(object args) {
             Todo todo = this.Bind();
+
+            var connection = @"Server=localhost;Port=5432;User ID=postgres;Password=postgres;Database=nancy;";
+            var options = new DbContextOptionsBuilder<TodoApiContext>();
+            options.UseNpgsql(connection);
+
+            using (var context = new TodoApiContext(options.Options))
+            {
+                context.Add<Todo>(todo);
+                context.SaveChanges();
+            }
+
             return todo;
         }
     }
